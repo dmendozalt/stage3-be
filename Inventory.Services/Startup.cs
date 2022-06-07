@@ -1,7 +1,13 @@
+using AutoMapper;
+using Inventory.Contracts.Repository;
+using Inventory.Core.Mapping;
+using Inventory.DataAccess.Context;
+using Inventory.Repositories.ImplementRepositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +38,22 @@ namespace Inventory.Services
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Inventory.Services", Version = "v1" });
             });
+
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new MappingProfile());
+            });
+
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddDbContext<SqlServerContext>(op =>
+            {
+                op.UseSqlServer(Configuration.GetConnectionString("Default"));
+            });
+
+            services.AddTransient<IProductRepository, ProductRepository>();
+            services.AddTransient<IMovementRepository, MovementRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

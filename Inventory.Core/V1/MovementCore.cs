@@ -4,13 +4,11 @@ using Inventory.Core.Handlers;
 using Inventory.Entities.DTOs;
 using Inventory.Entities.Entities;
 using Inventory.Entities.Utils;
-using Inventory.Repositories.ImplementRepositories;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Inventory.Core.V1
@@ -18,16 +16,18 @@ namespace Inventory.Core.V1
     public class MovementCore
     {
         private readonly IMovementRepository _context;
+        private readonly ProductCore _productCore;
         private readonly ILogger<Movement> _logger;
         private readonly ErrorHandler<Movement> _errorHandler;
         private readonly IMapper _mapper;
 
-        public MovementCore(ILogger<Movement> logger, IMapper mapper, IMovementRepository context)
+        public MovementCore(ILogger<Movement> logger, IMapper mapper, IMovementRepository context,IProductRepository productContext, ILogger<Product> productLogger)
         {
             _logger = logger;
             _errorHandler = new ErrorHandler<Movement>(logger);
             _context = context;
             _mapper = mapper;
+            _productCore = new(productLogger, mapper,productContext);
         }
 
         public async Task<ResponseService<List<Movement>>> GetMovementsAsync()
@@ -48,19 +48,7 @@ namespace Inventory.Core.V1
             {
                 Movement newMovement = _mapper.Map<Movement>(movement);
                 
-                IProductRepository productRepository = new ProductRepository();
-                Product product = await productRepository.GetByIdAsync(newMovement.IdProduct);
-                if (newMovement.Type == -1)
-                {
-                    //Salida
-                    product.Stock -= newMovement.Qty;
-                }
-                else if (newMovement.Type == 1)
-                {
-                    //Entrada
-                    product.Stock += newMovement.Qty;
-                }
-                await productRepository.UpdateAsync(product);
+                await _productCore.UpdateProductStockAsync(movement.IdProduct,movement.Qty,movement.Type);
                 
                 var response = await _context.AddAsync(newMovement);
                 return new ResponseService<Movement>(false, response == null ? "No records found" : "Movement created", HttpStatusCode.OK, response.Item1);

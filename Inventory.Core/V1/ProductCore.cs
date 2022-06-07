@@ -73,6 +73,27 @@ namespace Inventory.Core.V1
                 return _errorHandler.Error(ex, "UpdateProductAsync", new Product());
             }
         }
+        public async Task<bool> UpdateProductStockAsync(int id,int qty, int type)
+        {
+            Product product = await _context.GetByIdAsync(id);
+            if (type == 1)
+            {
+                product.Stock += qty;
+            }
+            else if (type == -1)
+            {
+                if(product.Stock > 0)
+                {
+                    product.Stock -= qty;
+                }
+                else
+                {
+                    throw new Exception("Not enough to make action");
+                }
+            }
+            var response=await _context.UpdateAsync(product);
+            return response.Item2;
+        }
         public async Task<ResponseService<Product>> AddProductAsync(ProductCreateDto product)
         {
             try

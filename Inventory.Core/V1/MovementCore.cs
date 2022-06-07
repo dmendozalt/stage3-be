@@ -4,6 +4,7 @@ using Inventory.Core.Handlers;
 using Inventory.Entities.DTOs;
 using Inventory.Entities.Entities;
 using Inventory.Entities.Utils;
+using Inventory.Repositories.ImplementRepositories;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -46,6 +47,21 @@ namespace Inventory.Core.V1
             try
             {
                 Movement newMovement = _mapper.Map<Movement>(movement);
+                
+                IProductRepository productRepository = new ProductRepository();
+                Product product = await productRepository.GetByIdAsync(newMovement.IdProduct);
+                if (newMovement.Type == -1)
+                {
+                    //Salida
+                    product.Stock -= newMovement.Qty;
+                }
+                else if (newMovement.Type == 1)
+                {
+                    //Entrada
+                    product.Stock += newMovement.Qty;
+                }
+                await productRepository.UpdateAsync(product);
+                
                 var response = await _context.AddAsync(newMovement);
                 return new ResponseService<Movement>(false, response == null ? "No records found" : "Movement created", HttpStatusCode.OK, response.Item1);
             }

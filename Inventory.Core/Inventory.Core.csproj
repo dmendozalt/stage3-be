@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Inventory.Contracts\Inventory.Contracts.csproj" />
     <ProjectReference Include="..\Inventory.DataAccess\Inventory.DataAccess.csproj" />
+    <ProjectReference Include="..\Inventory.Repositories\Inventory.Repositories.csproj" />
   </ItemGroup>
 
 </Project>
